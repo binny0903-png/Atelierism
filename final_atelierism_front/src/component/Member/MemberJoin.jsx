@@ -98,7 +98,79 @@ const MemberJoin = () => {
 
   const navigate = useNavigate();
 
-  // 회원가입 함수 수정
+  // ✅ 이메일 인증 상태 관리
+  const [mailCode, setMailCode] = useState("");
+  const [inputCode, setInputCode] = useState("");
+  const [authMsg, setAuthMsg] = useState("");
+  const [authColor, setAuthColor] = useState("black");
+  const [isAuthVisible, setIsAuthVisible] = useState(false);
+  const [time, setTime] = useState(0);
+  const intervalRef = useRef(null);
+
+  // ✅ 이메일 인증코드 전송
+  const sendCode = async () => {
+    if (member.memberEmail === "") {
+      Swal.fire("이메일을 입력해주세요.");
+      return;
+    }
+    try {
+      clearInterval(intervalRef.current);
+      setTime(180);
+      setIsAuthVisible(true);
+      setAuthMsg("");
+      setAuthColor("black");
+
+      const res = await axios.get(
+        `${backServer}/member/sendCode?memberEmail=${member.memberEmail}`
+      );
+      setMailCode(res.data);
+
+      intervalRef.current = setInterval(() => {
+        setTime((prev) => {
+          if (prev <= 1) {
+            clearInterval(intervalRef.current);
+            setMailCode("");
+            setAuthMsg("인증시간이 만료되었습니다.");
+            setAuthColor("#F67272");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (error) {
+      setAuthMsg("인증코드 전송에 실패했습니다.");
+      setAuthColor("#F67272");
+    }
+  };
+
+  // ✅ 이메일 인증번호 검증
+  const verifyCode = () => {
+    if (!mailCode) {
+      setAuthMsg("인증번호가 만료되었거나 전송되지 않았습니다.");
+      setAuthColor("#F67272");
+      return;
+    }
+    if (inputCode.trim() === mailCode.toString().trim()) {
+      setAuthMsg("인증완료");
+      setAuthColor("#40C79C");
+      clearInterval(intervalRef.current);
+      setMailCode("");
+      setTime(0);
+    } else {
+      setAuthMsg("인증번호가 일치하지 않습니다.");
+      setAuthColor("#F67272");
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${min.toString().padStart(2, "0")}:${sec
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  // ✅ 회원가입
   const joinMember = () => {
     if (
       member.memberName !== "" &&
@@ -120,7 +192,6 @@ const MemberJoin = () => {
         .post(`${backServer}/member`, sendMember)
         .then((res) => {
           if (res.data === 1) {
-            // 회원가입 성공 시 alert 띄우기
             Swal.fire({
               title: "회원가입 완료 🎉",
               text: "회원가입이 성공적으로 완료되었습니다!",
@@ -128,7 +199,7 @@ const MemberJoin = () => {
               confirmButtonText: "확인",
               confirmButtonColor: "#40C79C",
             }).then(() => {
-              navigate("/"); // 확인 누르면 메인으로 이동
+              navigate("/");
             });
           }
         })
@@ -141,6 +212,7 @@ const MemberJoin = () => {
     }
   };
 
+  // ✅ 주소 모달
   const [isModal, setIsModal] = useState(false);
   const [memberAddr, setMemberAddr] = useState({
     zonecode: "",
@@ -156,69 +228,6 @@ const MemberJoin = () => {
     setMember({ ...member, memberAddr: data.address });
   };
 
-  const [mailCode, setMailCode] = useState(null);
-  const [inputCode, setInputCode] = useState("");
-  const [authMsg, setAuthMsg] = useState("");
-  const [authColor, setAuthColor] = useState("black");
-  const [isAuthVisible, setIsAuthVisible] = useState(false);
-  const [time, setTime] = useState(180);
-  const intervalRef = useRef(null);
-
-  useEffect(() => {
-    if (!isAuthVisible) return;
-    clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      setTime((prev) => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current);
-          setMailCode(null);
-          setAuthMsg("인증시간이 만료되었습니다.");
-          setAuthColor("#F67272");
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(intervalRef.current);
-  }, [isAuthVisible]);
-
-  const sendCode = async () => {
-    try {
-      clearInterval(intervalRef.current);
-      setTime(180);
-      setIsAuthVisible(true);
-      setAuthMsg("");
-      const res = await axios.get(
-        `${backServer}/member/sendCode?memberEmail=${member.memberEmail}`
-      );
-      setMailCode(res.data);
-    } catch (error) {
-      setAuthMsg("인증코드 전송에 실패했습니다.");
-      setAuthColor("#F67272");
-    }
-  };
-
-  const verifyCode = () => {
-    if (inputCode === mailCode) {
-      setAuthMsg("인증완료");
-      setAuthColor("#40C79C");
-      clearInterval(intervalRef.current);
-      setMailCode(null);
-      setTime(0);
-    } else {
-      setAuthMsg("인증번호를 입력하세요");
-      setAuthColor("#F67272");
-    }
-  };
-
-  const formatTime = (seconds) => {
-    const min = Math.floor(seconds / 60);
-    const sec = seconds % 60;
-    return `${min.toString().padStart(2, "0")}:${sec
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
   return (
     <section className="join-wrap">
       <div className="page-title">회원가입</div>
@@ -228,6 +237,7 @@ const MemberJoin = () => {
           joinMember();
         }}
       >
+        {/* 아이디 */}
         <div className="input-wrap">
           <div className="input-title">
             <label htmlFor="memberId">아이디</label>
@@ -242,8 +252,8 @@ const MemberJoin = () => {
               onBlur={checkId}
               placeholder="아이디를 입력해주세요"
               required
-              autocomplete="off"
-            ></input>
+              autoComplete="off"
+            />
             <p
               className={
                 idCheck === 0
@@ -263,6 +273,8 @@ const MemberJoin = () => {
             </p>
           </div>
         </div>
+
+        {/* 비밀번호 */}
         <div className="input-wrap">
           <div className="input-title">
             <label htmlFor="memberPw">비밀번호</label>
@@ -277,11 +289,13 @@ const MemberJoin = () => {
               onBlur={checkPwReg}
               placeholder="비밀번호를 입력해주세요"
               required
-              autocomplete="off"
-            ></input>
+              autoComplete="off"
+            />
             <p className="input-msg" ref={pwRegMsgRef}></p>
           </div>
         </div>
+
+        {/* 비밀번호 확인 */}
         <div className="input-wrap">
           <div className="input-title">
             <label htmlFor="memberPwRe">비밀번호 확인</label>
@@ -293,16 +307,16 @@ const MemberJoin = () => {
               name="memberPwRe"
               placeholder="비밀번호를 확인해주세요"
               value={memberPwRe}
-              onChange={(e) => {
-                setMemberPwRe(e.target.value);
-              }}
+              onChange={(e) => setMemberPwRe(e.target.value)}
               onBlur={checkPw}
               required
-              autocomplete="off"
-            ></input>
+              autoComplete="off"
+            />
             <p className="input-msg" ref={pwMatchMsgRef}></p>
           </div>
         </div>
+
+        {/* 이름 */}
         <div className="input-wrap">
           <div className="input-title">
             <label htmlFor="memberName">이름</label>
@@ -316,10 +330,12 @@ const MemberJoin = () => {
               onChange={inputMemberData}
               placeholder="이름을 입력해주세요"
               required
-              autocomplete="off"
-            ></input>
+              autoComplete="off"
+            />
           </div>
         </div>
+
+        {/* 전화번호 */}
         <div className="input-wrap">
           <div className="input-title">
             <label htmlFor="memberPhone">전화번호</label>
@@ -333,16 +349,18 @@ const MemberJoin = () => {
               onChange={inputMemberData}
               placeholder="전화번호를 입력해주세요"
               required
-              autocomplete="off"
-            ></input>
+              autoComplete="off"
+            />
           </div>
         </div>
+
+        {/* 이메일 인증 */}
         <div className="input-wrap">
           <div className="input-title">
             <label htmlFor="memberEmail">이메일</label>
           </div>
           <div className="input-item">
-            {!isAuthVisible && (
+            {!isAuthVisible ? (
               <>
                 <input
                   type="text"
@@ -352,58 +370,59 @@ const MemberJoin = () => {
                   onChange={inputMemberData}
                   placeholder="이메일을 입력해주세요"
                   required
-                  autocomplete="off"
+                  autoComplete="off"
                 />
                 <button type="button" onClick={sendCode}>
                   인증코드 전송
                 </button>
               </>
-            )}
-
-            {isAuthVisible && (
-              <div className="check-email">
+            ) : (
+              <div
+                className="check-email"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
                 <input
                   type="text"
                   placeholder="인증번호를 입력해주세요"
                   value={inputCode}
                   onChange={(e) => setInputCode(e.target.value)}
-                  style={{ float: "left" }}
-                  autocomplete="off"
+                  autoComplete="off"
+                  style={{ flex: "1" }}
                 />
                 {time > 0 && (
-                  <p
+                  <span
                     style={{
                       color: "green",
-                      marginTop: "5px",
-                      float: "left",
-                      marginRight: "10px",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {formatTime(time)}
-                  </p>
+                  </span>
                 )}
                 <button
                   type="button"
                   onClick={verifyCode}
-                  style={{ cursor: "pointer" }}
-                  autocomplete="off"
+                  style={{
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                  autoComplete="off"
                 >
                   인증하기
                 </button>
-                {authMsg && (
-                  <p
-                    style={{
-                      color: authColor,
-                      clear: "both",
-                    }}
-                  >
-                    {authMsg}
-                  </p>
-                )}
               </div>
+            )}
+            {authMsg && (
+              <p style={{ color: authColor, marginTop: "5px" }}>{authMsg}</p>
             )}
           </div>
         </div>
+
+        {/* 주소 */}
         <div className="input-wrap">
           <div className="input-title">
             <label htmlFor="memberAddr">주소</label>
@@ -416,8 +435,8 @@ const MemberJoin = () => {
               value={memberAddr.address}
               onChange={inputMemberData}
               placeholder="주소를 입력해주세요"
-              autocomplete="off"
-            ></input>
+              autoComplete="off"
+            />
             <button type="button" onClick={openModal}>
               우편번호 조회
             </button>
@@ -450,7 +469,6 @@ const MemberJoin = () => {
                 </div>
               </div>
             )}
-
             <input
               type="text"
               id="memberAddrDetail"
@@ -459,10 +477,12 @@ const MemberJoin = () => {
               onChange={inputMemberData}
               placeholder="상세주소를 입력해주세요"
               required
-              autocomplete="off"
-            ></input>
+              autoComplete="off"
+            />
           </div>
         </div>
+
+        {/* 회원가입 버튼 */}
         <div className="join-button">
           <button type="submit">회원가입</button>
         </div>
