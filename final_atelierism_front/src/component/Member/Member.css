@@ -138,21 +138,19 @@
 .check-email {
   display: flex;
   align-items: center;
-  gap: 6px; /* 인풋-타이머-버튼 간격 */
+  gap: 6px;
   justify-content: flex-start;
   width: fit-content;
 }
 
-/* ✅ 인풋 길이 조정 (다른 인풋이랑 맞춤) */
 .check-email > input {
-  width: 350px; /* 기존 55% → 고정 폭으로 */
+  width: 350px;
   font-size: 16px;
   border: none;
   border-bottom: 1px solid #9a9a9a;
   padding: 6px 8px;
 }
 
-/* ✅ 타이머 */
 .check-email > span {
   color: #8aa996;
   font-size: 16px;
@@ -160,7 +158,6 @@
   margin-left: 4px;
 }
 
-/* ✅ 버튼 디자인 통일 */
 .check-email > button {
   border: 1px solid #8aa996;
   border-radius: 8px;
