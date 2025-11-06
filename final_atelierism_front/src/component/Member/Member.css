@@ -135,20 +135,50 @@
 .join-wrap > .page-title {
   font-size: 24px;
 }
+.check-email {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* 인풋-타이머-버튼 간격 */
+  justify-content: flex-start;
+  width: fit-content;
+}
+
+/* ✅ 인풋 길이 조정 (다른 인풋이랑 맞춤) */
 .check-email > input {
-  width: 55%;
-  font-size: 18px;
-  margin-right: 30px;
+  width: 350px; /* 기존 55% → 고정 폭으로 */
+  font-size: 16px;
   border: none;
   border-bottom: 1px solid #9a9a9a;
+  padding: 6px 8px;
 }
+
+/* ✅ 타이머 */
+.check-email > span {
+  color: #8aa996;
+  font-size: 16px;
+  white-space: nowrap;
+  margin-left: 4px;
+}
+
+/* ✅ 버튼 디자인 통일 */
 .check-email > button {
   border: 1px solid #8aa996;
   border-radius: 8px;
   background-color: #8aa996;
-  padding: 5px 15px;
   color: #fff;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
 }
+
+.check-email > p {
+  margin: 5px 0 0 0;
+  font-size: 14px;
+  color: inherit;
+  width: 100%;
+}
+
 .join-wrap .input-wrap > .input-item > .checkId {
   border: 1px solid #8aa996;
   border-radius: 8px;
