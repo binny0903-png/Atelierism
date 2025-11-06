@@ -25,7 +25,6 @@ const AdminSalesStatus = () => {
     axios
       .get(`${backServer}/admin/list?toMonth=${toMonth}`)
       .then((res) => {
-        console.log("백엔드 응답 데이터:", res.data);
         setPriceList(res.data.pl);
         setSpaceTotal(res.data.spaceTotal);
         setMonthTotal(res.data);
@@ -34,8 +33,6 @@ const AdminSalesStatus = () => {
         console.log(err);
       });
   }, []);
-
-  console.log("order", chartOrder);
   return (
     <div className="admin-sales-status-allwrap">
       <div className="admin-sales-status-wrap">
