@@ -19,12 +19,13 @@ const AdminSalesStatus = () => {
   };
   const [priceList, setPriceList] = useState(null); //가격표
   const [monthTotal, setMonthTotal] = useState(null); //이달의 통계
-  const [spaceTotal, setSpaceTotal] = useState(null); //공간별 매충
+  const [spaceTotal, setSpaceTotal] = useState(null); //공간별 매출
+
   useEffect(() => {
     axios
       .get(`${backServer}/admin/list?toMonth=${toMonth}`)
       .then((res) => {
-        console.log(res);
+        console.log("백엔드 응답 데이터:", res.data);
         setPriceList(res.data.pl);
         setSpaceTotal(res.data.spaceTotal);
         setMonthTotal(res.data);
@@ -87,25 +88,25 @@ const AdminSalesStatus = () => {
             </div>
             <div className="site-total">
               <h2>사이트 토탈</h2>
-              {monthTotal != null && (
+              {monthTotal != null && monthTotal.salesStatus && (
                 <div className="total-table">
                   <table border={1}>
                     <tbody>
                       <tr>
                         <th>이달의 총 매출</th>
-                        <td>{monthTotal.salesStatus.totalOfMonth}원</td>
+                        <td>{monthTotal?.salesStatus?.totalOfMonth ?? 0}원</td>
                       </tr>
                       <tr>
                         <th>이달의 가입자</th>
-                        <td>{monthTotal.subscriberMonth.siteSubscriber}명</td>
+                        <td>{monthTotal?.subscriberMonth?.siteSubscriber ?? 0}명</td>
                       </tr>
                       <tr>
                         <th>사이트 순 매출</th>
-                        <td>{monthTotal.salesStatus.siteRevenue}원</td>
+                        <td>{monthTotal?.salesStatus?.siteRevenue ?? 0}원</td>
                       </tr>
                       <tr>
                         <th>디자이너 매출</th>
-                        <td>{monthTotal.salesStatus.designerMonth}원</td>
+                        <td>{monthTotal?.salesStatus?.designerMonth ?? 0}원</td>
                       </tr>
                     </tbody>
                   </table>
@@ -116,7 +117,7 @@ const AdminSalesStatus = () => {
           <div className="admin-sales-status-content-bottom">
             <div className="space-sales">
               <h2>이달의 공간별 매출</h2>
-              {spaceTotal != null && (
+              {Array.isArray(spaceTotal) && spaceTotal.length > 0 ? (
                 <div className="space-sales-table">
                   <table border={1}>
                     <thead>
@@ -128,31 +129,33 @@ const AdminSalesStatus = () => {
                     <tbody>
                       <tr>
                         <td>원룸</td>
-                        <td>{spaceTotal[3].totalOfSpace}원</td>
+                        <td>{spaceTotal?.[3]?.totalOfSpace ?? 0}원</td>
                       </tr>
                       <tr>
                         <td>거실</td>
-                        <td>{spaceTotal[4].totalOfSpace}원</td>
+                        <td>{spaceTotal?.[4]?.totalOfSpace ?? 0}원</td>
                       </tr>
                       <tr>
                         <td>부엌</td>
-                        <td>{spaceTotal[2].totalOfSpace}원</td>
+                        <td>{spaceTotal?.[2]?.totalOfSpace ?? 0}원</td>
                       </tr>
                       <tr>
                         <td>아이방</td>
-                        <td>{spaceTotal[5].totalOfSpace}원</td>
+                        <td>{spaceTotal?.[5]?.totalOfSpace ?? 0}원</td>
                       </tr>
                       <tr>
                         <td>안방</td>
-                        <td>{spaceTotal[1].totalOfSpace}원</td>
+                        <td>{spaceTotal?.[1]?.totalOfSpace ?? 0}원</td>
                       </tr>
                       <tr>
                         <td>서재</td>
-                        <td>{spaceTotal[0].totalOfSpace}원</td>
+                        <td>{spaceTotal?.[0]?.totalOfSpace ?? 0}원</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
+              ) : (
+                <p>📊 공간별 매출 데이터가 없습니다.</p>
               )}
             </div>
             {/*-------가격표-------------*/}
@@ -169,31 +172,31 @@ const AdminSalesStatus = () => {
                   <tbody>
                     <tr>
                       <td>원룸</td>
-                      <td>{priceList.priceOneroom}원</td>
+                      <td>{priceList?.priceOneroom ?? 0}원</td>
                     </tr>
                     <tr>
                       <td>거실</td>
-                      <td>{priceList.priceLiving}원</td>
+                      <td>{priceList?.priceLiving ?? 0}원</td>
                     </tr>
                     <tr>
                       <td>부엌</td>
-                      <td>{priceList.priceKitchen}원</td>
+                      <td>{priceList?.priceKitchen ?? 0}원</td>
                     </tr>
                     <tr>
                       <td>아이방</td>
-                      <td>{priceList.priceKidroom}원</td>
+                      <td>{priceList?.priceKidroom ?? 0}원</td>
                     </tr>
                     <tr>
                       <td>안방</td>
-                      <td>{priceList.priceBed}원</td>
+                      <td>{priceList?.priceBed ?? 0}원</td>
                     </tr>
                     <tr>
                       <td>서재</td>
-                      <td>{priceList.priceStudy}원</td>
+                      <td>{priceList?.priceStudy ?? 0}원</td>
                     </tr>
                     <tr>
                       <td>수수료</td>
-                      <td>{priceList.priceCharge}%</td>
+                      <td>{priceList?.priceCharge ?? 0}%</td>
                     </tr>
                   </tbody>
                 </table>
@@ -234,22 +237,13 @@ const PriceUpdateModal = ({ onClose, priceList, setPriceList, backServer }) => {
     for (const listCheck in inputPrice) {
       if (inputPrice[listCheck] !== "0" && inputPrice[listCheck] !== "") {
         newList[listCheck] = inputPrice[listCheck];
-        //newList라는 객체를 새로 생성 후
-        //[listCheck]라는 key에 inputPrice[listCheck]라는 value를 넣음
-        //그리고 newList에 복사해서 넣음
       }
-    }
-    {
-      /*정상적인 값만 가지고 있는 newList를 axios에 전달*/
     }
     axios
       .patch(`${backServer}/admin`, newList)
       .then((res) => {
         if (res.data >= 1) {
           for (const key in newList) {
-            //정보 처리가 끝난 뒤 다시 for in 문을 사용
-            //newList에 있는 정상적인 데이터를 PriceList(화면처리 데이터)에 set
-            //모달창 안쪽도 반영해야하니까 InputPrice에도 set
             priceList[key] = newList[key];
           }
           setPriceList({ ...priceList });
@@ -262,12 +256,10 @@ const PriceUpdateModal = ({ onClose, priceList, setPriceList, backServer }) => {
       })
       .catch((err) => {
         console.log(err);
-        if (res.data !== 1) {
-          Swal.fire({
-            title: "가격변경 실패",
-            icon: "warning",
-          });
-        }
+        Swal.fire({
+          title: "가격변경 실패",
+          icon: "warning",
+        });
       });
   };
   return (
@@ -280,7 +272,7 @@ const PriceUpdateModal = ({ onClose, priceList, setPriceList, backServer }) => {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              updatePriceTable;
+              updatePriceTable();
             }}
           >
             <table className="price-table-form">
