@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="kr.co.iei.admin.model.dao.AdminDao">
+
 	<select id="priceListSelect" resultType="priceList">
 		select * from price_tbl
 	</select>
@@ -36,10 +37,6 @@
 		select * from member_tbl where member_type = 3
 	</select>
 	
-	<!-- <select id="adminDesignerList">
-		
-	</select> -->
-	
 	<select id="memberTotalCount" resultType="int">
 		select count(*) from member_tbl where member_type = 3
 	</select>
@@ -67,184 +64,238 @@
 	</select>
 	
 	<select id="selectMemberList" resultType="member">
-    SELECT * FROM (
-        SELECT rownum AS rnum, b.*
-        FROM (
-            SELECT
-                member_id,
-                member_name,
-                member_phone,
-                member_type
-            FROM member_tbl 
-            WHERE member_type = 3
-            
-            <if test="memOrder == 'm1'">
-                ORDER BY enroll_date DESC
-            </if>
-            <if test="memOrder == 'm2'">
-                ORDER BY enroll_date ASC
-            </if>
-            ) b
-    )
-    WHERE rnum BETWEEN #{start} AND #{end}
-</select>
+	    SELECT * FROM (
+	        SELECT rownum AS rnum, b.*
+	        FROM (
+	            SELECT
+	                member_id,
+	                member_name,
+	                member_phone,
+	                member_type
+	            FROM member_tbl 
+	            WHERE member_type = 3
+	            <if test="memOrder == 'm1'">
+	                ORDER BY enroll_date DESC
+	            </if>
+	            <if test="memOrder == 'm2'">
+	                ORDER BY enroll_date ASC
+	            </if>
+	        ) b
+	    )
+	    WHERE rnum BETWEEN #{start} AND #{end}
+	</select>
 
-<select id="selectApplicantList" resultType="applicant">
-	SELECT * FROM (
-        SELECT rownum AS rnum, b.*
-        FROM (
-        	select m.designer_enter,
-					m.member_phone,
-					m.member_name,
-					d.DESIGNER_CAREER ,
-					m.member_id
-			from member_tbl m left join designer_tbl d on
-			m.member_id = d.member_id
-		<if test="memOrder == 'a1'">
-			where m.designer_enter = 0 and m.member_type = 3 and d.designer_career is not null
-			ORDER BY member_name DESC
-		</if>
-		<if test="memOrder == 'a3'">
-			where m.designer_enter = 2 ORDER BY member_name DESC
-		</if>
-		<if test="memOrder == 'a2'">
-			where m.designer_enter = 1 ORDER BY member_name DESC
-		</if>
-            ) b
-    )
-    WHERE rnum BETWEEN #{start} AND #{end}
-</select>
+	<select id="selectApplicantList" resultType="applicant">
+		SELECT * FROM (
+	        SELECT rownum AS rnum, b.*
+	        FROM (
+	        	select m.designer_enter,
+						m.member_phone,
+						m.member_name,
+						d.DESIGNER_CAREER ,
+						m.member_id
+				from member_tbl m left join designer_tbl d on
+				m.member_id = d.member_id
+			<if test="memOrder == 'a1'">
+				where m.designer_enter = 0 and m.member_type = 3 and d.designer_career is not null
+				ORDER BY member_name DESC
+			</if>
+			<if test="memOrder == 'a3'">
+				where m.designer_enter = 2 ORDER BY member_name DESC
+			</if>
+			<if test="memOrder == 'a2'">
+				where m.designer_enter = 1 ORDER BY member_name DESC
+			</if>
+	        ) b
+	    )
+	    WHERE rnum BETWEEN #{start} AND #{end}
+	</select>
 
-<select id="selectDesignerList" resultType="designerList">
-	SELECT * FROM (
-        SELECT rownum AS rnum, b.*
-        FROM (
-        <if test="memOrder == 'd1'">
-        	<![CDATA[ 
-        		select member_id, member_name, member_phone, sum(nvl(interior_price,0)) as total_price
+	<select id="selectDesignerList" resultType="designerList">
+		SELECT * FROM (
+	        SELECT rownum AS rnum, b.*
+	        FROM (
+	        <if test="memOrder == 'd1'">
+	        	<![CDATA[ 
+	        		select member_id, member_name, member_phone, sum(nvl(interior_price,0)) as total_price
+					from member_tbl
+						left join (select * from INTERIOR_TBL where INTERIOR_PAYMENT_DATE between to_char(add_months(sysdate,-3) ,'yyyy-mm-dd') and to_char(sysdate,'yyyy-mm-dd')) on (member_id = interior_designer)
+					where member_type=2 and member_tbl.DESIGNER_ENTER = 1
+					group by(member_id, member_name, member_phone)
+					order by 4 desc
+				]]>
+	        </if>
+	        <if test="memOrder == 'd2'">
+	        	<![CDATA[
+	        		select member_id, member_name, member_phone, sum(nvl(interior_price,0)) as total_price
+					from member_tbl
+						left join (select * from INTERIOR_TBL where INTERIOR_PAYMENT_DATE between to_char(add_months(sysdate,-6) ,'yyyy-mm-dd') and to_char(sysdate,'yyyy-mm-dd')) on (member_id = interior_designer)
+					where member_type=2 and member_tbl.DESIGNER_ENTER = 1
+					group by(member_id, member_name, member_phone)
+					order by 4 desc
+	        	]]>
+	        </if>
+	        <if test="memOrder == 'd3'">
+	        	select member_id, member_name, member_phone, sum(nvl(interior_price,0)) as total_price
 				from member_tbl
-					left join (select * from INTERIOR_TBL where INTERIOR_PAYMENT_DATE between to_char(add_months(sysdate,-3) ,'yyyy-mm-dd') and to_char(sysdate,'yyyy-mm-dd')) on (member_id = interior_designer)
+					left join interior_tbl on (member_id = interior_designer)
 				where member_type=2 and member_tbl.DESIGNER_ENTER = 1
 				group by(member_id, member_name, member_phone)
 				order by 4 desc
-			]]>
-        </if>
-        <if test="memOrder == 'd2'">
-        	<![CDATA[
-        		select member_id, member_name, member_phone, sum(nvl(interior_price,0)) as total_price
-				from member_tbl
-					left join (select * from INTERIOR_TBL where INTERIOR_PAYMENT_DATE between to_char(add_months(sysdate,-6) ,'yyyy-mm-dd') and to_char(sysdate,'yyyy-mm-dd')) on (member_id = interior_designer)
-				where member_type=2 and member_tbl.DESIGNER_ENTER = 1
-				group by(member_id, member_name, member_phone)
-				order by 4 desc
-        	]]>
-        </if>
-        <if test="memOrder == 'd3'">
-        	select member_id, member_name, member_phone, sum(nvl(interior_price,0)) as total_price
-			from member_tbl
-				left join interior_tbl on (member_id = interior_designer)
-			where member_type=2 and member_tbl.DESIGNER_ENTER = 1
-			group by(member_id, member_name, member_phone)
-			order by 4 desc
-        </if>
-       ) b     
-    )
-    WHERE rnum BETWEEN #{start} AND #{end}
-</select>
+	        </if>
+	       ) b     
+	    )
+	    WHERE rnum BETWEEN #{start} AND #{end}
+	</select>
 
-<select id="selectApplicantDetail" resultType="designerDetailDTO">
-	select m.member_id, m.member_thumb, m.member_name, d.designer_career, d.designer_age, m.member_email, m.member_phone, m.member_addr, d.designer_graduation_date,
-	d.designer_graduation, d.designer_bank, d.designer_account, d.designer_portfolio, d.designer_chat from
-		MEMBER_TBL m left join DESIGNER_TBL d 
-		on m.member_id = d.MEMBER_ID
-	where m.member_id = #{memberId}
-</select>
+	<select id="selectApplicantDetail" resultType="designerDetailDTO">
+		select m.member_id, m.member_thumb, m.member_name, d.designer_career, d.designer_age, m.member_email, m.member_phone, m.member_addr, d.designer_graduation_date,
+		d.designer_graduation, d.designer_bank, d.designer_account, d.designer_portfolio, d.designer_chat 
+		from MEMBER_TBL m 
+		left join DESIGNER_TBL d on m.member_id = d.MEMBER_ID
+		where m.member_id = #{memberId}
+	</select>
 
-<select id="selectApplicantAward" resultType="applicantAward">
-	select m.member_id, a.award_no, a.designer_awards_dete, a.designer_awards 
-		from member_tbl m left join designer_awards_career_tbl a 
-		on m.member_id = a.member_id
-	where m.member_id = #{memberId}
-</select>
+	<select id="selectApplicantAward" resultType="applicantAward">
+		select m.member_id, a.award_no, a.designer_awards_dete, a.designer_awards 
+			from member_tbl m left join designer_awards_career_tbl a 
+			on m.member_id = a.member_id
+		where m.member_id = #{memberId}
+	</select>
 
-<select id="selectApplicantCareer" resultType="applicantCareer">
-	select m.member_id, c.career_no, c.designer_career_sy, 
-	c.designer_career_ey, c.designer_career_com
-		from member_tbl m left join designer_career_detail_tbl c
-		on m.member_id = c.member_id
-	where m.member_id = #{memberId}
-</select>
+	<select id="selectApplicantCareer" resultType="applicantCareer">
+		select m.member_id, c.career_no, c.designer_career_sy, 
+		c.designer_career_ey, c.designer_career_com
+			from member_tbl m left join designer_career_detail_tbl c
+			on m.member_id = c.member_id
+		where m.member_id = #{memberId}
+	</select>
 
-<update id="refusalDesigner">
-	update member_tbl set designer_enter = 2 where member_id = #{memberId}
-</update>
+	<update id="refusalDesigner">
+		update member_tbl set designer_enter = 2 where member_id = #{memberId}
+	</update>
 
-<update id="enterDesigner">
-	update member_tbl set member_type = 2, designer_enter = 1 where member_id = #{memberId}
-</update>
+	<update id="enterDesigner">
+		update member_tbl set member_type = 2, designer_enter = 1 where member_id = #{memberId}
+	</update>
 
-<select id="applicantList" resultType="member">
-	select m.member_name, m.designer_enter
-		from member_tbl m left join designer_tbl d
-		on m.member_id = d.member_id
-	where d.designer_career is not null and m.member_type = 3 and rownum &lt; 7
-	and m.designer_enter = 0
-	order by 1 desc
-</select>
+	<select id="applicantList" resultType="member">
+		select m.member_name, m.designer_enter
+			from member_tbl m left join designer_tbl d
+			on m.member_id = d.member_id
+		where d.designer_career is not null and m.member_type = 3 and rownum &lt; 7
+		and m.designer_enter = 0
+		order by 1 desc
+	</select>
 
-<select id="topDesigner" resultType="topDesigner">
-with select_month as(
-    select to_char(add_months(sysdate,-1*(level-1)),'yyyy-mm') mon from dual connect by level &lt;= 6
-)
-select mon, sum(nvl(interior_price,0)) as total_price,interior_designer, m.member_name, m.MEMBER_PHONE from select_month
-left join (select * from interior_tbl) on (mon = substr(interior_payment_date,1,7))
-left join member_tbl m on interior_designer = member_id
-where mon = #{toMonth} and rownum &lt; 6
-group by (mon,interior_designer,m.member_name,m.member_phone)
-order by 2 desc
-</select>
-
-<select id="selectMonthList" resultType="monthList">
-	select nvl(sum(total_price),0) as total_of_month, nvl(sum(designer_charge),0) as designer_month, nvl(sum(company_charge),0) as site_revenue from (
-select sum(nvl(interior_price,0)) as total_price ,interior_designer as id, m.member_name as name, 
-    sum(nvl(interior_price,0) * (1 - interior_payment_charge/100)) as designer_charge ,
-    sum(nvl(interior_price,0) * interior_payment_charge/100) as company_charge, i.INTERIOR_PAYMENT_DATE    
-    from interior_tbl i
-left join member_tbl m on interior_designer = member_id
-where substr(i.INTERIOR_PAYMENT_DATE,1,7) = to_char(sysdate,'yyyy-mm')
-group by (interior_designer,m.member_name, i.INTERIOR_PAYMENT_DATE)
-order by 2 desc)
-</select>
-
-<select id="selectSiteSubscriber" resultType="monthList">
-	select count(enroll_date) as site_subscriber
-	from member_tbl
-	where enroll_date like #{monthDate}
-</select>
-
-<select id="selectTotalOfSpace" resultType="monthList">
-	select d.space_name, nvl(sum((space_count)* d.SPACE_PRICE), 0) as total_of_space from INTERIOR_DETAIL_TBL d
-		left join INTERIOR_TBL i on d.interior_no=i.interior_no
-	where substr(i.INTERIOR_PAYMENT_DATE,1,7) = to_char(sysdate,'yyyy-mm')
-		GROUP by (d.space_name, d.SPACE_PRICE, d.space_name)
-</select>
-
-<select id="chartSelect" resultType="chart">
+	<select id="topDesigner" resultType="topDesigner">
 	with select_month as(
-    select to_char(add_months(sysdate,-1*(level-1)),'yyyy-mm') mon
-    	<if test="chartOrder == 1">
-    	from dual connect by level &lt;= 3
-    	</if>
-    	<if test="chartOrder == 2">
-    	from dual connect by level &lt;= 6
-    	</if>
-    	<if test="chartOrder == 3">
-    	from dual connect by level &lt;= 12
-    	</if>
-    	)
-		select mon, sum(nvl(interior_price,0)) as price_of_month from select_month
-			left join (select * from interior_tbl) on (mon = substr(interior_payment_date,1,7))
-			group by (mon)                                                  
-			order by 1
+	    select to_char(add_months(sysdate,-1*(level-1)),'yyyy-mm') mon from dual connect by level &lt;= 6
+	)
+	select mon, sum(nvl(interior_price,0)) as total_price,interior_designer, m.member_name, m.MEMBER_PHONE 
+	from select_month
+	left join (select * from interior_tbl) on (mon = substr(interior_payment_date,1,7))
+	left join member_tbl m on interior_designer = member_id
+	where mon = #{toMonth} and rownum &lt; 6
+	group by (mon,interior_designer,m.member_name,m.member_phone)
+	order by 2 desc
+	</select>
+
+	<!-- ✅ 수정된 부분 : 이달의 매출 현황 -->
+	<select id="selectMonthList" parameterType="string" resultType="monthList">
+		select 
+		    nvl(sum(i.interior_price),0) as total_of_month,
+		    nvl(sum(i.interior_price * (1 - i.interior_payment_charge/100)),0) as designer_month,
+		    nvl(sum(i.interior_price * (i.interior_payment_charge/100)),0) as site_revenue
+		from interior_tbl i
+		where substr(i.INTERIOR_PAYMENT_DATE,1,7) = #{monthDate}
+	</select>
+	<!-- ✅ 수정된 부분 끝 -->
+
+	<select id="selectSiteSubscriber" resultType="monthList">
+		select count(enroll_date) as site_subscriber
+		from member_tbl
+		where enroll_date like #{monthDate}
+	</select>
+
+	<!-- ✅ INTERIOR_DETAIL_TBL 기준으로 집계 -->
+<select id="selectTotalOfSpace" parameterType="string" resultType="interiorDetail">
+    SELECT 
+        d.SPACE_NAME,
+        SUM(d.SPACE_COUNT * d.SPACE_PRICE) AS TOTAL_OF_SPACE
+    FROM 
+        INTERIOR_DETAIL_TBL d
+    JOIN 
+        INTERIOR_TBL i ON d.INTERIOR_NO = i.INTERIOR_NO
+    WHERE 
+        SUBSTR(i.INTERIOR_PAYMENT_DATE, 1, 7) = #{monthDate}
+    GROUP BY 
+        d.SPACE_NAME
+    ORDER BY 
+        d.SPACE_NAME
 </select>
+
+
+
+	<select id="chartSelect" resultType="chart">
+		with select_month as(
+		    select to_char(add_months(sysdate,-1*(level-1)),'yyyy-mm') mon
+		    	<if test="chartOrder == 1">
+		    	from dual connect by level &lt;= 3
+		    	</if>
+		    	<if test="chartOrder == 2">
+		    	from dual connect by level &lt;= 6
+		    	</if>
+		    	<if test="chartOrder == 3">
+		    	from dual connect by level &lt;= 12
+		    	</if>
+		)
+		select mon, sum(nvl(interior_price,0)) as price_of_month 
+		from select_month
+		left join (select * from interior_tbl) on (mon = substr(interior_payment_date,1,7))
+		group by (mon)                                                  
+		order by 1
+	</select>
+	<select id="countInteriorDetailData" parameterType="string" resultType="int">
+        select count(*) 
+        from INTERIOR_DETAIL_TBL d
+        join INTERIOR_TBL i on d.INTERIOR_NO = i.INTERIOR_NO
+        where substr(i.INTERIOR_PAYMENT_DATE,1,7) = #{monthDate}
+    </select>
+
+    <!-- ✅ INTERIOR_TBL 데이터를 기반으로 INTERIOR_DETAIL_TBL 자동 생성 -->
+    <insert id="insertInteriorDetailFromInterior" parameterType="string">
+    insert into INTERIOR_DETAIL_TBL (INTERIOR_NO, SPACE_NAME, SPACE_COUNT, SPACE_PRICE)
+    select 
+        i.INTERIOR_NO,
+        u.SPACE_NAME,
+        u.SPACE_COUNT,
+        case u.SPACE_NAME
+            when '거실' then p.PRICE_LIVING
+            when '주방' then p.PRICE_KITCHEN
+            when '침실' then p.PRICE_BED
+            when '원룸' then p.PRICE_ONEROOM
+            when '아이방' then p.PRICE_KIDROOM
+            when '서재' then p.PRICE_STUDY
+        end as SPACE_PRICE
+    from INTERIOR_TBL i
+    join PRICE_TBL p on 1=1
+    join (
+        select INTERIOR_NO, SPACE_NAME, SPACE_COUNT
+        from INTERIOR_TBL
+        unpivot (
+            SPACE_COUNT for SPACE_NAME in (
+                INTERIOR_LIVING as '거실',
+                INTERIOR_KITCHEN as '주방',
+                INTERIOR_BED as '침실',
+                INTERIOR_ONEROOM as '원룸',
+                INTERIOR_KIDROOM as '아이방',
+                INTERIOR_STUDY as '서재'
+            )
+        )
+    ) u on i.INTERIOR_NO = u.INTERIOR_NO
+    where substr(i.INTERIOR_PAYMENT_DATE,1,7) = #{monthDate}
+      and u.SPACE_COUNT > 0
+</insert>
+
 </mapper>

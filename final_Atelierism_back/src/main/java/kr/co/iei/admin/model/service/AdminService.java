@@ -7,13 +7,10 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
 
 import kr.co.iei.admin.model.dao.AdminDao;
 import kr.co.iei.admin.model.dto.AdminMonthSalesStatus;
 import kr.co.iei.admin.model.dto.PriceListDto;
-import kr.co.iei.board.model.dao.ReviewBoardDao;
-import kr.co.iei.member.model.dto.MemberDTO;
 import kr.co.iei.util.PageInfo;
 import kr.co.iei.util.PageInfoUtils;
 
@@ -26,27 +23,38 @@ public class AdminService {
 	private PageInfoUtils pageInfoUtils;
 
 	public Map selectSalesStateList(String monthDate) {
-		Map<String, Object> salesStateList = new HashMap<String, Object>();
-		AdminMonthSalesStatus salesStatus = adminDao.selectMonthList();
-		AdminMonthSalesStatus subscriberMonth = adminDao.selectSiteSubscriber(monthDate);
-		List spaceTotal = adminDao.selectTotalOfSpace();
-		PriceListDto pl = adminDao.priceListSelect();
-		salesStateList.put("salesStatus", salesStatus);
-		salesStateList.put("subscriberMonth", subscriberMonth);
-		salesStateList.put("pl", pl);
-		salesStateList.put("spaceTotal", spaceTotal);
-		return salesStateList;
+	    Map<String, Object> salesStateList = new HashMap<>();
+
+	    // ✅ 1. 기본 매출/가입자/단가 정보 조회
+	    AdminMonthSalesStatus salesStatus = adminDao.selectMonthList(monthDate);
+	    AdminMonthSalesStatus subscriberMonth = adminDao.selectSiteSubscriber(monthDate);
+	    PriceListDto pl = adminDao.priceListSelect();
+
+	    // ✅ 2. interior_detail_tbl 데이터가 없으면 interior_tbl 기반으로 생성
+	    int detailCount = adminDao.countInteriorDetailData(monthDate);
+	    if (detailCount == 0) {
+	        adminDao.insertInteriorDetailFromInterior(monthDate);
+	    }
+
+	    // ✅ 3. 공간별 매출 조회 (생성 후 실행)
+	    List spaceTotal = adminDao.selectTotalOfSpace(monthDate);
+
+	    // ✅ 4. Map 구성
+	    salesStateList.put("salesStatus", salesStatus);
+	    salesStateList.put("subscriberMonth", subscriberMonth);
+	    salesStateList.put("pl", pl);
+	    salesStateList.put("spaceTotal", spaceTotal);
+	    return salesStateList;
 	}
-	
+
 	public Map myPageList(String toMonth) {
 		Map<String, Object> myPageList = new HashMap<String, Object>();
-		List applicantList = adminDao.applicantList();//신청자리스트
-		List topDesignerList = adminDao.topDesigner(toMonth);//이달의 디자이너 top5
+		List applicantList = adminDao.applicantList();
+		List topDesignerList = adminDao.topDesigner(toMonth);
 		myPageList.put("applicantList", applicantList);
 		myPageList.put("topDesignerList", topDesignerList);
 		return myPageList;
 	}
-	
 	
 	public PriceListDto priceListSelect() {
 		PriceListDto pl = adminDao.priceListSelect();
@@ -57,24 +65,11 @@ public class AdminService {
 	public int updatePriceList(PriceListDto priceList) {
 		int result = adminDao.updatePriceList(priceList);
 		return result;
-	}//updatePriceList
-
-	/*public List selectAdminList(String pageList) {
-		if(pageList.equals("m1")) {
-			List adminListData = adminDao.adminMemberList();
-			return adminListData;
-		} else if(pageList.equals("m2")) {
-			List adminListData = adminDao.adminDesignerList();
-			return adminListData;
-		}else{
-			List adminListData = adminDao.adminApplicantList();
-			return adminListData;
-		}
-	}*/
+	}
 
 	public Map selectBoardList(int reqPage, String memOrder) {
-		int numPerPage = 10;		//한 페이지당 게시물 수
-		int pageNaviSize = 5;		//페이지 네비 길이
+		int numPerPage = 10;
+		int pageNaviSize = 5;
 		int totalCount = 0;
 		if(memOrder.equals("m1")||memOrder.equals("m2")) {
 			totalCount = adminDao.memberTotalCount();
@@ -83,24 +78,19 @@ public class AdminService {
 		} else if(memOrder.equals("d1")||memOrder.equals("d2")||memOrder.equals("d3")) {
 			totalCount = adminDao.designerTotalCount(memOrder);
 		}
-		PageInfo pi = pageInfoUtils.getPageInfo(reqPage, numPerPage, pageNaviSize, totalCount);//ok
-		//pi랑 정렬기준을 둘 다 줘야하기때문에 Map이라는 객체로 묶어서 보냄
-		//정렬에 필요한건 start, end, memOrder 3가지라서 이것만 묶어서 보냄
+		PageInfo pi = pageInfoUtils.getPageInfo(reqPage, numPerPage, pageNaviSize, totalCount);
 		Map<String, Object> orderMap = new HashMap<String, Object>();
 		orderMap.put("start",pi.getStart());
 		orderMap.put("end", pi.getEnd());
 		orderMap.put("memOrder", memOrder);
-		//묶은뒤 전송
 		if(memOrder.equals("m1")||memOrder.equals("m2")) {
 			List reqList = adminDao.selectMemberList(orderMap);
-			//select 성공하면 다른 map으로 묶어서 전송해줌
 			Map<String, Object> map = new HashMap<String,Object>();
 			map.put("reqList", reqList);
 			map.put("pi", pi);
 			return map;
 		}else if(memOrder.equals("a1")||memOrder.equals("a2")||memOrder.equals("a3")) {
 			List reqList = adminDao.selectApplicantList(orderMap);
-			//select 성공하면 다른 map으로 묶어서 전송해줌
 			Map<String, Object> map = new HashMap<String,Object>();
 			map.put("reqList", reqList);
 			map.put("pi", pi);
@@ -112,9 +102,8 @@ public class AdminService {
 			map.put("pi", pi);
 			return map;
 		}
-	}//selectBoardList
+	}
 
-	
 	public Map selectApplicantDetailList(String memberId) {
 		List applicantDetail = adminDao.selectApplicantDetail(memberId);
 		List applicantAward = adminDao.selectApplicantAward(memberId);
@@ -142,7 +131,5 @@ public class AdminService {
 		List chartData = adminDao.chartSelect(chartOrder);
 		return chartData;
 	}
-
-	
 
 }

@@ -7,8 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 import kr.co.iei.admin.model.dto.AdminMonthSalesStatus;
 import kr.co.iei.admin.model.dto.PriceListDto;
-import kr.co.iei.member.model.dto.MemberDTO;
-import kr.co.iei.util.PageInfo;
+import kr.co.iei.interior.model.dto.InteriorDetailDTO;
 
 @Mapper
 public interface AdminDao {
@@ -49,13 +48,18 @@ public interface AdminDao {
 
 	List topDesigner(String toMonth);
 
-	AdminMonthSalesStatus selectMonthList();
-
 	AdminMonthSalesStatus selectSiteSubscriber(String monthDate);
 
 	List chartSelect(int chartOrder);
 
-	List selectTotalOfSpace();
-	
+	// ✅ 수정: monthDate를 전달받도록 변경
+	List<InteriorDetailDTO> selectTotalOfSpace(String monthDate);
 
+	AdminMonthSalesStatus selectMonthList(String monthDate);
+
+	// ✅ 추가: detail 테이블 존재 여부 확인
+	int countInteriorDetailData(String monthDate);
+
+	// ✅ 추가: interior_tbl 데이터를 기반으로 detail 테이블 생성
+	int insertInteriorDetailFromInterior(String monthDate);
 }

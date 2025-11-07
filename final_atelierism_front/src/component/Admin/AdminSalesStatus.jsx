@@ -25,6 +25,7 @@ const AdminSalesStatus = () => {
     axios
       .get(`${backServer}/admin/list?toMonth=${toMonth}`)
       .then((res) => {
+        console.log("관리자 매출 응답 : ",res.data)
         setPriceList(res.data.pl);
         setSpaceTotal(res.data.spaceTotal);
         setMonthTotal(res.data);
@@ -33,6 +34,7 @@ const AdminSalesStatus = () => {
         console.log(err);
       });
   }, []);
+
   return (
     <div className="admin-sales-status-allwrap">
       <div className="admin-sales-status-wrap">
@@ -83,27 +85,28 @@ const AdminSalesStatus = () => {
                 </button>
               </div>
             </div>
+
             <div className="site-total">
               <h2>사이트 토탈</h2>
-              {monthTotal != null && monthTotal.salesStatus && (
+              {monthTotal != null && (
                 <div className="total-table">
                   <table border={1}>
                     <tbody>
                       <tr>
                         <th>이달의 총 매출</th>
-                        <td>{monthTotal?.salesStatus?.totalOfMonth ?? 0}원</td>
+                        <td>{monthTotal?.totalOfMonth ?? 0}원</td>
                       </tr>
                       <tr>
                         <th>이달의 가입자</th>
-                        <td>{monthTotal?.subscriberMonth?.siteSubscriber ?? 0}명</td>
+                        <td>{monthTotal?.siteSubscriber ?? 0}명</td>
                       </tr>
                       <tr>
                         <th>사이트 순 매출</th>
-                        <td>{monthTotal?.salesStatus?.siteRevenue ?? 0}원</td>
+                        <td>{monthTotal?.siteRevenue ?? 0}원</td>
                       </tr>
                       <tr>
                         <th>디자이너 매출</th>
-                        <td>{monthTotal?.salesStatus?.designerMonth ?? 0}원</td>
+                        <td>{monthTotal?.designerMonth ?? 0}원</td>
                       </tr>
                     </tbody>
                   </table>
@@ -111,6 +114,7 @@ const AdminSalesStatus = () => {
               )}
             </div>
           </div>
+
           <div className="admin-sales-status-content-bottom">
             <div className="space-sales">
               <h2>이달의 공간별 매출</h2>
@@ -155,6 +159,7 @@ const AdminSalesStatus = () => {
                 <p>📊 공간별 매출 데이터가 없습니다.</p>
               )}
             </div>
+
             {/*-------가격표-------------*/}
             {priceList !== null && (
               <div className="price-list">
