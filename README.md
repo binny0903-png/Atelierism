@@ -9,10 +9,10 @@
 디자이너는 본인의 작업물을 공유하고 고객을 유치할 수 있는 시스템 제공
 
 # 사용 기술
-Front-end : react
-back-end : Spring
-DataBase : SqlDeveloper(Oracle)
-협업 : github
+1. Front-end : react
+2. back-end : Spring
+3. DataBase : SqlDeveloper(Oracle)
+4. 협업 : github
 
 # 페이지 전체 항목
 1. 관리자 페이지
