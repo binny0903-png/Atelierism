@@ -3,17 +3,22 @@ import "./member.css";
 import { useState } from "react";
 import Swal from "sweetalert2";
 const Agreement = () => {
+  // 체크박스 상태 (필수 약관 1, 필수 약관 2)
   const [isChecked1, setIsChecked1] = useState(false);
   const [isChecked2, setIsChecked2] = useState(false);
 
+  // 첫 번째 약관 체크박스 변경 시 실행
   const checkBox1 = (e) => {
     setIsChecked1(e.target.checked);
   };
+   // 두 번째 약관 체크박스 변경 시 실행
   const checkBox2 = (e) => {
     setIsChecked2(e.target.checked);
   };
 
   const navigate = useNavigate();
+  // "다음" 버튼 클릭 시 실행
+  // 두 개의 필수 약관 체크 여부 확인 → 모두 체크 시 회원가입 페이지로 이동
   const nextPage = () => {
     if (isChecked1 && isChecked2) {
       navigate("/member/join");
@@ -24,6 +29,7 @@ const Agreement = () => {
       });
     }
   };
+   // "이전" 버튼 클릭 시 메인 페이지로 이동
   const prevPage = () => {
     navigate("/");
   };
