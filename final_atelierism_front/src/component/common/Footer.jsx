@@ -17,7 +17,7 @@ const Footer = () => {
             <tbody>
               <tr>
                 <th>CEO</th>
-                <td>문보윤</td>
+                <td>조성빈</td>
               </tr>
               <tr>
                 <th>주소</th>
